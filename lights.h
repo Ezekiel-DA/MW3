@@ -1,6 +1,7 @@
 #pragma once
 
 #include "quakeFlicker.h"
+#include "pacifica.h"
 #include "LED_functions.h"
 
 // TODO
@@ -137,7 +138,9 @@ public:
       return false;
     }
 
-    this->_val = enhancedQuakeFlicker(this->_lastLightUpdate, this->_selectedPatternID, this->_prevPatternID, this->_patternStep);
+    if (this->_selectedPatternID < NUM_LIGHTSTYLES) // don't perform Quake style flicker if we're out of range of those; we'll do Pacifica instead
+      this->_val = enhancedQuakeFlicker(this->_lastLightUpdate, this->_selectedPatternID, this->_prevPatternID, this->_patternStep);
+    
     return true;
   };
 
@@ -161,6 +164,10 @@ class PatternLightLEDStrip : public PatternLight<true>
 public:
   PatternLightLEDStrip(int numLEDs) : _numLEDs(numLEDs){};
 
+  virtual byte nextPattern() {
+    this->_selectedPatternID = ++(this->_selectedPatternID) % (NUM_LIGHTSTYLES + 1); // add one to support Pacifica as an additional style, which is not handled by the quakeFlicker code
+  };
+
   void setup()
   {
     _leds = new CRGB[_numLEDs];
@@ -175,7 +182,10 @@ public:
   {
     if (PatternLight::update())
     {
-      setAllLEDs(CHSV(_hue, _saturation, _val), _leds, _numLEDs);
+      if (_selectedPatternID < NUM_LIGHTSTYLES)
+        setAllLEDs(CHSV(_hue, _saturation, _val), _leds, _numLEDs);
+      else
+        pacifica_loop(_leds, _numLEDs);
     }
 
     return true;
