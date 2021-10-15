@@ -51,6 +51,12 @@ public:
    */
   virtual void setup() = 0;
 
+  /**
+   * Pulse light briefly, to indicate it is in programming mode. This is a BLOCKING operation by design, to simplify having to deal with existing patterns.
+   * Each subclass is in charge of implementing some way to do this and not interfere with anything.
+   */
+  virtual void pulse() = 0;
+
   void serialize(LightDataBlock* ioDataBlock)
   {
     ioDataBlock->cycleColor = _cycleColor;
@@ -146,7 +152,7 @@ public:
 // ----------------------------------------------------------------
 // A PatternLight on a WS2812B LED string (with color)
 // ----------------------------------------------------------------
-template <int dataPin>
+template <int dataPin, int cloneDataPin=0>
 class PatternLightLEDStrip : public PatternLight<true>
 {
   int _numLEDs;
@@ -159,6 +165,8 @@ public:
   {
     _leds = new CRGB[_numLEDs];
     FastLED.addLeds<WS2812B, dataPin, GRB>(_leds, _numLEDs).setCorrection(TypicalLEDStrip);
+    if (cloneDataPin)
+      FastLED.addLeds<WS2812B, cloneDataPin, GRB>(_leds, _numLEDs).setCorrection(TypicalLEDStrip);
 
     PatternLight::setup();
   };
@@ -167,11 +175,24 @@ public:
   {
     if (PatternLight::update())
     {
-      setAllLEDs(CHSV(lighstyles_jitter[_selectedPatternID] ? _hue + random8(32) : _hue, _saturation, _val), _leds, _numLEDs);
+      setAllLEDs(CHSV(_hue, _saturation, _val), _leds, _numLEDs);
     }
 
     return true;
-  }
+  };
+
+  void pulse()
+  {
+    for (byte i = 0; i < 4; ++i)
+    {
+      setAllLEDs(CRGB::White, _leds, _numLEDs);
+      FastLED.show();
+      delay(100);
+      setAllLEDs(CRGB::Black, _leds, _numLEDs);
+      FastLED.show();
+      delay(100);
+    }
+  };
 };
 
 // ----------------------------------------------------------------
@@ -201,6 +222,17 @@ public:
 
     return true;
   };
+
+  void pulse()
+  {
+    for (byte i = 0; i < 4; ++i)
+    {
+      analogWrite(_pin, 255);
+      delay(100);
+      analogWrite(_pin, 0);
+      delay(100);
+    }
+  };
 };
 
 // ----------------------------------------------------------------
@@ -217,7 +249,7 @@ public:
   void setup()
   {
     pinMode(_pin, OUTPUT);
-    analogWrite(_pin, 0);
+    digitalWrite(_pin, LOW);
 
     PatternLight::setup();
   };
@@ -230,6 +262,17 @@ public:
     }
 
     return true;
+  };
+
+  void pulse()
+  {
+    for (byte i = 0; i < 4; ++i)
+    {
+      digitalWrite(_pin, HIGH);
+      delay(100);
+      digitalWrite(_pin, LOW);
+      delay(100);
+    }
   };
 };
 
@@ -262,28 +305,6 @@ class FairyLightsController : public ILight
     }
   }
 
-  void fairyLightsOn()
-  {
-    _selectedPatternID = _onPatternID;
-  };
-
-  void fairyLightsOff()
-  {
-    _selectedPatternID = _offPatternID;
-  };
-
-void pulseFairyLights(short iMs=1000) {
-  static uint16_t prev = millis();
-  uint16_t now = millis();
-  if ((uint16_t) (now - prev) >= iMs) {
-    if (_selectedPatternID != _onPatternID)
-      fairyLightsOn();
-    else
-      fairyLightsOff();
-    prev = now;
-  }
-}
-
 public:
   FairyLightsController(int pin, byte numPatternsAvailable=9, byte offPatternID=0, byte onPatternID=8) : _pin(pin), _numPatternsAvailable(numPatternsAvailable), _offPatternID(offPatternID), _onPatternID(onPatternID) {};
 
@@ -309,5 +330,18 @@ public:
   // NB this probably needs to move to some base class shared with PatternLight but I can't be bothered right now
   virtual byte nextPattern() {
     this->_selectedPatternID = ++(this->_selectedPatternID) % _numPatternsAvailable;
+  };
+
+  void pulse()
+  {
+    clickFairyLights(patternDistance(_selectedPatternID, _offPatternID));
+    for (byte i = 0; i < 3; ++i)
+    {
+      clickFairyLights(patternDistance(_offPatternID, _onPatternID));
+      delay(50);
+      clickFairyLights(patternDistance(_onPatternID, _offPatternID));
+      delay(50);
+    }
+    clickFairyLights(patternDistance(_offPatternID, _selectedPatternID));
   };
 };

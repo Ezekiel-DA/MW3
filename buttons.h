@@ -35,6 +35,7 @@ void adminButtonEventHandler(AceButton *button, uint8_t eventType, uint8_t butto
     whichObject = ++whichObject % NUM_LIGHTOBJECTS;
     Serial.print("Controlling object #");
     Serial.println(whichObject);
+    lights[whichObject]->pulse();
     break;
   }
 }

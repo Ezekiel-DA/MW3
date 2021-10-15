@@ -12,15 +12,23 @@ using namespace ace_button;
 
 MFRC522 rfid(MW_SPI_CS, UINT8_MAX); // RST pin (NRSTPD on MFRC522) not connected; setting it to this will let the library switch to using soft reset only
 
-PatternLightLEDStrip<MW_STRIP_0_DATA> window1(NUM_LEDS_WINDOWS);
-PatternLightLEDStrip<MW_STRIP_1_DATA> window2(NUM_LEDS_WINDOWS);
-PatternLightLEDStrip<MW_STRIP_5_DATA> groundlight1(NUM_LEDS_GROUNDLIGHTS);
+// PatternLightLEDStrip<MW_STRIP_0_DATA> window1(NUM_LEDS_WINDOWS);
+// PatternLightLEDStrip<MW_STRIP_1_DATA> window2(NUM_LEDS_WINDOWS);
+// PatternLightLEDStrip<MW_STRIP_5_DATA> groundlight1(NUM_LEDS_GROUNDLIGHTS);
 
-PatternLightPWMPort starfield(STARFIELD_PIN);
-PatternLightPWMPort fairyLights(FAIRYLIGHTS_PWM_PIN);
+// PatternLightPWMPort starfield(STARFIELD_PIN);
+// PatternLightPWMPort fairyLights(FAIRYLIGHTS_PWM_PIN);
+// FairyLightsController fairyLightsAlt(FAIRYLIGHTS_CONTROLLER_PIN);
+
+// ILight *lights[] = {&window1, &window2, &groundlight1, &starfield, &fairyLights, &fairyLightsAlt};
+
+// PatternLightLEDStrip<MW_STRIP_0_DATA> window1(NUM_LEDS_WINDOWS);
+// PatternLightLEDStrip<MW_STRIP_1_DATA> window2(NUM_LEDS_WINDOWS);
+PatternLightLEDStrip<MW_STRIP_0_DATA, MW_STRIP_1_DATA> window1(7);
+PatternLightLEDStrip<MW_STRIP_5_DATA> groundlight1(NUM_LEDS_GROUNDLIGHTS);
 FairyLightsController fairyLightsAlt(FAIRYLIGHTS_CONTROLLER_PIN);
 
-ILight *lights[] = {&window1, &window2, &groundlight1, &starfield, &fairyLights, &fairyLightsAlt};
+ILight *lights[] = {&window1, &groundlight1, &fairyLightsAlt};
 extern const byte NUM_LIGHTOBJECTS = sizeof(lights) / sizeof(void *);
 
 static const byte defaultLightConfiguration[][15] = {
@@ -52,6 +60,9 @@ void setup()
   Serial.print("MW3 ready; ");
   Serial.print(NUM_LIGHTOBJECTS);
   Serial.println(" lights available.");
+
+  // pulse the selected light, also serves as a boot up complete indicator
+  lights[whichObject]->pulse();
 };
 
 void debug_printFPS()
@@ -64,31 +75,6 @@ void debug_printFPS()
     prevDebugOut = now;
   }
 };
-
-
-// void writeLightSettingsToTag()
-// {
-//   byte lightsDataBuffer[16];
-//   for (byte i = 0; i < 5; ++i)
-//   {
-//     lights[i]->serialize( &(((LightDataBlock*) lightsDataBuffer)[i]) );
-//   }
-//   lightsDataBuffer[15] = 0xFF;
-
-//   Serial.println("lightsData block is:");
-//   dump_byte_array(lightsDataBuffer, 15); Serial.println();
-//   Serial.println("Writing data to tag...");
-
-//   MFRC522::StatusCode ret = writeBlock(rfid, MW_RFID_DATA_BLOCK_ADDR, lightsDataBuffer);
-//   if (ret != MFRC522::STATUS_OK)
-//   {
-//     Serial.print(F("Internal failure while writing to tag: "));
-//     Serial.println(rfid.GetStatusCodeName(ret));
-//     return;
-//   }
-//   Serial.println("Wrote lights data to tag.");
-// };
-
 
 void writeLightSettingsToTag()
 {
@@ -175,13 +161,13 @@ void loop()
   FastLED.show();
 
   if (rfidGlobalOverride) { // apply some default lights without querying RFID reader
-    for (byte block = 0; block < MW_RFID_DATA_BLOCK_COUNT; ++block)
-    {
-      for (byte i = 0; i < 5; ++i)
-      {
-        lights[block * 5 + i]->deserialize( &(((LightDataBlock*) defaultLightConfiguration[block])[i]) );
-      }
-    }
+    // for (byte block = 0; block < MW_RFID_DATA_BLOCK_COUNT; ++block)
+    // {
+    //   for (byte i = 0; i < 5; ++i)
+    //   {
+    //     lights[block * 5 + i]->deserialize( &(((LightDataBlock*) defaultLightConfiguration[block])[i]) );
+    //   }
+    // }
     rfidGlobalOverride = false;
   }
   else // Get light info (or save it) from RFID

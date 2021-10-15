@@ -11,22 +11,12 @@ String lightstyles[] = {
     "a",                                     // OFF
     "z",                                     // ON
     "HIJKLMNOPQRSTUVWXYZYXWVUTSRQPONMLKJIH", // PULSE
-    //"WVXWZWVXVWVXVXVWX",                     // FLICKER
-    "MMNMMOMMOMMNONMMONQNMMO",
-    //"MMMMNNMMMMOOMMMMOOMMMMNNOONNMMMMOONNQQNNMMMMOO",
+    "MMNMMOMMOMMNONMMONQNMMO",               // FLICKER
     "aaaaaaaazzzzzzzz",                      // SLOW STROBE
     "zzazazzzzazzazazaaazazzza",             // FLUORESCENT FLICKER
 };
 
-// whether or not it is appropriate to jitter colors for the corresponding lightstyle. Keep this in sync with the array above!
-bool lighstyles_jitter[] = {
-    false,
-    false,
-    false,
-    false,
-    false,
-    false};
-static const byte NUM_LIGHTSTYLES = sizeof(lighstyles_jitter) / sizeof(bool);
+static const byte NUM_LIGHTSTYLES = 6; // Keep this in sync with the size of the array above!
 
 /**
  * Calculate the next light value in a Quake style light animation
