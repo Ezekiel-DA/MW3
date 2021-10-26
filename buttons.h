@@ -104,6 +104,8 @@ void setupButtons()
 
   colorButtonConfig.setFeature(ButtonConfig::kFeatureClick);
   colorButtonConfig.setFeature(ButtonConfig::kFeatureLongPress);
+  colorButtonConfig.setClickDelay(400);
+  colorButtonConfig.setLongPressDelay(1200);
   colorButtonConfig.setEventHandler(colorButtonEventHandler);
 
   rfidButtonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);

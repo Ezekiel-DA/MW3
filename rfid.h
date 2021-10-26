@@ -4,26 +4,6 @@
 
 MFRC522::MIFARE_Key mifareDefaultKey = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-// Known tags attached to stuff
-#define RFID_TAG_UID_SIZE 4
-byte knownTags[][RFID_TAG_UID_SIZE] = {
-  { 0x53, 0xAA, 0x95, 0x1A }, // blank card
-  { 0x57, 0x99, 0x52, 0xC8 }, // blue puck
-  // { 0x8D, 0x78, 0x9A, 0x4F }, // printed mini
-  { 0xCD, 0x78, 0x9A, 0x4F }, // blank tag
-  { 0x4D, 0x79, 0x9A, 0x4F }, // pink mouse
-  { 0x0D, 0x79, 0x9A, 0x4F }  // white cat
-};
-
-// Returns the index of a known tag in our knownTags array, or 255 if unknown (so don't add more that 254 tags, I guess!)
-byte findKnownTag(byte* uid, byte uidSize) {
-  for (byte i = 0; i < sizeof(knownTags)/RFID_TAG_UID_SIZE; ++i) {
-    if (knownTags[i][0] == uid[0] && knownTags[i][1] == uid[1] && knownTags[i][2] == uid[2] && knownTags[i][3] == uid[3])
-      return i;
-  }
-  return 255;
-}
-
 void printHex(byte *buffer, byte bufferSize) {
   Serial.print("{ ");
   for (byte i = 0; i < bufferSize; i++) {

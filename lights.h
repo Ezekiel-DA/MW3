@@ -153,27 +153,59 @@ public:
 };
 
 // ----------------------------------------------------------------
-// A PatternLight on a WS2812B LED string (with color)
+// A PatternLight on one or more WS2812B LED string (with color)
+// Support up to three strips; strips can be of different lengths.
+// See constructor for hackish details of multiple strip support.
+//
+// TODO: handling of multiple strips is pretty hackish and gross, but
+// at this point I don't want to clean it up for MW3. Maybe for MW4!
+//
 // ----------------------------------------------------------------
-template <int dataPin, int cloneDataPin=0>
+template <int dataPin1, int dataPin2=0, int dataPin3=0>
 class PatternLightLEDStrip : public PatternLight<true>
 {
-  int _numLEDs;
-  CRGB *_leds = nullptr;
+  int _numLEDs1;
+  int _numLEDs2;
+  int _numLEDs3;
+  CRGB *_leds1 = nullptr;
+  CRGB *_leds2 = nullptr;
+  CRGB *_leds3 = nullptr;
 
 public:
-  PatternLightLEDStrip(int numLEDs) : _numLEDs(numLEDs){};
+  // Number of LEDs in the strip is optional if strips 2 and 3 are present. For any of strip 2 or 3 where the number of LEDs is not specified, two things will happen:
+  // - the number of LEDs from strip 1 will be used
+  // - the buffer for strip 1 will be reused
+  PatternLightLEDStrip(int numLEDs1, int numLEDs2=0, int numLEDs3=0) : _numLEDs1(numLEDs1), _numLEDs2(numLEDs2), _numLEDs3(numLEDs3)
+  {
+    if (!_numLEDs2)
+        _numLEDs2 = _numLEDs1;
+    if (!_numLEDs3)
+        _numLEDs3 = _numLEDs1;
+  };
 
-  virtual byte nextPattern() {
+  virtual byte nextPattern()
+  {
     this->_selectedPatternID = ++(this->_selectedPatternID) % (NUM_LIGHTSTYLES + 1); // add one to support Pacifica as an additional style, which is not handled by the quakeFlicker code
   };
 
   void setup()
   {
-    _leds = new CRGB[_numLEDs];
-    FastLED.addLeds<WS2812B, dataPin, GRB>(_leds, _numLEDs).setCorrection(TypicalLEDStrip);
-    if (cloneDataPin)
-      FastLED.addLeds<WS2812B, cloneDataPin, GRB>(_leds, _numLEDs).setCorrection(TypicalLEDStrip);
+    _leds1 = new CRGB[_numLEDs1];
+    FastLED.addLeds<WS2812B, dataPin1, GRB>(_leds1, _numLEDs1).setCorrection(TypicalLEDStrip);
+    if (dataPin2)
+    {
+      if (_numLEDs2 != _numLEDs1)
+        _leds2 = new CRGB[_numLEDs2];
+
+      FastLED.addLeds<WS2812B, dataPin2, GRB>(_numLEDs2 == _numLEDs1 ? _leds1 : _leds2, _numLEDs2).setCorrection(TypicalLEDStrip);
+    }
+    if (dataPin3)
+    {
+      if (_numLEDs3 != _numLEDs1)
+        _leds3 = new CRGB[_numLEDs3];
+
+      FastLED.addLeds<WS2812B, dataPin3, GRB>(_numLEDs3 == _numLEDs1 ? _leds1 : _leds3, _numLEDs3).setCorrection(TypicalLEDStrip);
+    }
 
     PatternLight::setup();
   };
@@ -183,9 +215,21 @@ public:
     if (PatternLight::update())
     {
       if (_selectedPatternID < NUM_LIGHTSTYLES)
-        setAllLEDs(CHSV(_hue, _saturation, _val), _leds, _numLEDs);
+      {
+        setAllLEDs(CHSV(_hue, _saturation, _val), _leds1, _numLEDs1);
+        if (_leds2)
+          setAllLEDs(CHSV(_hue, _saturation, _val), _leds2, _numLEDs2);
+        if (_leds3)
+          setAllLEDs(CHSV(_hue, _saturation, _val), _leds3, _numLEDs3);
+      }
       else
-        pacifica_loop(_leds, _numLEDs);
+      {
+        pacifica_loop(_leds1, _numLEDs1);
+        if (_leds2)
+          pacifica_loop(_leds2, _numLEDs2);
+        if (_leds3)
+          pacifica_loop(_leds3, _numLEDs3);
+      }
     }
 
     return true;
@@ -195,10 +239,18 @@ public:
   {
     for (byte i = 0; i < 4; ++i)
     {
-      setAllLEDs(CRGB::White, _leds, _numLEDs);
+      setAllLEDs(CRGB::White, _leds1, _numLEDs1);
+      if (_leds2)
+        setAllLEDs(CRGB::White, _leds2, _numLEDs2);
+      if (_leds3)
+        setAllLEDs(CRGB::White, _leds3, _numLEDs3);
       FastLED.show();
       delay(100);
-      setAllLEDs(CRGB::Black, _leds, _numLEDs);
+      setAllLEDs(CRGB::Black, _leds1, _numLEDs1);
+      if (_leds2)
+        setAllLEDs(CRGB::Black, _leds2, _numLEDs2);
+      if (_leds3)
+        setAllLEDs(CRGB::Black, _leds3, _numLEDs3);
       FastLED.show();
       delay(100);
     }

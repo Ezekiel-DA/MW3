@@ -15,16 +15,15 @@ MFRC522 rfid(MW_SPI_CS, UINT8_MAX); // RST pin (NRSTPD on MFRC522) not connected
 PatternLightLEDStrip<MW_STRIP_0_DATA, MW_STRIP_1_DATA> windows(NUM_LEDS_WINDOWS);
 PatternLightLEDStrip<MW_STRIP_2_DATA, MW_STRIP_3_DATA> groundLights(NUM_LEDS_GROUNDLIGHTS);
 FairyLightsController fairyLights(MW_STRIP_4_DATA);
-PatternLightLEDStrip<MW_STRIP_5_DATA> moat(NUM_LEDS_WATERFALL_CENTER);
-PatternLightLEDStrip<MW_STRIP_6_DATA, MW_STRIP_7_DATA> waterfalls(NUM_LEDS_WATERFALL_SIDES);
+PatternLightLEDStrip<MW_STRIP_5_DATA, MW_STRIP_6_DATA, MW_STRIP_7_DATA> moat(NUM_LEDS_WATERFALL_CENTER, NUM_LEDS_WATERFALL_SIDES, NUM_LEDS_WATERFALL_SIDES);
 PatternLightPWMPort starfield(MW_5V_OUT_1);
 
-ILight *lights[] = {&windows, &groundLights, & fairyLights, &moat, &waterfalls, &starfield};
+ILight *lights[] = {&windows, &groundLights, & fairyLights, &moat, &starfield};
 extern const byte NUM_LIGHTOBJECTS = sizeof(lights) / sizeof(void *);
 
 static const byte defaultLightConfiguration[][15] = {
-  {0x06, 0x1E, 0xFF, 0x05, 0x48, 0xFF, 0x02, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x0C, 0x00, 0x00},
-  {0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+  {0x06, 0x1E, 0xFF, 0x05, 0x48, 0xFF, 0x02, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x02, 0x00, 0x00},
+  {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
   {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 };
 
@@ -156,7 +155,10 @@ void loop()
     {
       for (byte i = 0; i < 5; ++i)
       {
-        lights[block * 5 + i]->deserialize( &(((LightDataBlock*) defaultLightConfiguration[block])[i]) );
+        byte lightIdx = block * 5 + i;
+        if (lightIdx >= NUM_LIGHTOBJECTS)
+          break;
+        lights[lightIdx]->deserialize( &(((LightDataBlock*) defaultLightConfiguration[block])[i]) );
       }
     }
     rfidGlobalOverride = false;
