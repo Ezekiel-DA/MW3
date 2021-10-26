@@ -171,6 +171,8 @@ class PatternLightLEDStrip : public PatternLight<true>
   CRGB *_leds2 = nullptr;
   CRGB *_leds3 = nullptr;
 
+  byte _maxBrightness = 255;
+
 public:
   // Number of LEDs in the strip is optional if strips 2 and 3 are present. For any of strip 2 or 3 where the number of LEDs is not specified, two things will happen:
   // - the number of LEDs from strip 1 will be used
@@ -181,6 +183,11 @@ public:
         _numLEDs2 = _numLEDs1;
     if (!_numLEDs3)
         _numLEDs3 = _numLEDs1;
+  };
+
+  void setMaxBrightness(byte maxBrightness)
+  {
+    _maxBrightness = maxBrightness;
   };
 
   virtual byte nextPattern()
@@ -216,6 +223,7 @@ public:
     {
       if (_selectedPatternID < NUM_LIGHTSTYLES)
       {
+        byte scaledVal = scale8_video(_val, _maxBrightness);
         setAllLEDs(CHSV(_hue, _saturation, _val), _leds1, _numLEDs1);
         if (_leds2)
           setAllLEDs(CHSV(_hue, _saturation, _val), _leds2, _numLEDs2);

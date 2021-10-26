@@ -42,9 +42,9 @@ void setup()
   }
 
   FastLED.setBrightness(BRIGHTNESS);
+  groundLights.setMaxBrightness(180);
   FastLED.setMaxRefreshRate(60); // 60 FPS cap
   FastLED.clear();
-  FastLED.show();
 
   Serial.begin(115200);
   Serial.print("MW3 ready; ");
