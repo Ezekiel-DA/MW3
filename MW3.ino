@@ -42,7 +42,7 @@ void setup()
   }
 
   FastLED.setBrightness(BRIGHTNESS);
-  groundLights.setMaxBrightness(180);
+  groundLights.setMaxBrightness(210);
   FastLED.setMaxRefreshRate(60); // 60 FPS cap
   FastLED.clear();
 
@@ -51,8 +51,12 @@ void setup()
   Serial.print(NUM_LIGHTOBJECTS);
   Serial.println(" lights available.");
 
+  FastLED.show();
+
   // pulse the selected light, also serves as a boot up complete indicator
   lights[whichObject]->pulse();
+
+  applyDefaultSettings();
 };
 
 void debug_printFPS()
@@ -137,6 +141,20 @@ void readLightSettingsFromTag()
   Serial.println("Programmed lights with tag data.");
 };
 
+void applyDefaultSettings()
+{
+  for (byte block = 0; block < MW_RFID_DATA_BLOCK_COUNT; ++block)
+    {
+      for (byte i = 0; i < 5; ++i)
+      {
+        byte lightIdx = block * 5 + i;
+        if (lightIdx >= NUM_LIGHTOBJECTS)
+          break;
+        lights[lightIdx]->deserialize( &(((LightDataBlock*) defaultLightConfiguration[block])[i]) );
+      }
+    }
+}
+
 void loop()
 {
   //debug_printFPS();
@@ -151,16 +169,7 @@ void loop()
   FastLED.show();
 
   if (rfidGlobalOverride) { // apply some default lights without querying RFID reader
-    for (byte block = 0; block < MW_RFID_DATA_BLOCK_COUNT; ++block)
-    {
-      for (byte i = 0; i < 5; ++i)
-      {
-        byte lightIdx = block * 5 + i;
-        if (lightIdx >= NUM_LIGHTOBJECTS)
-          break;
-        lights[lightIdx]->deserialize( &(((LightDataBlock*) defaultLightConfiguration[block])[i]) );
-      }
-    }
+    applyDefaultSettings();
     rfidGlobalOverride = false;
   }
   else // Get light info (or save it) from RFID

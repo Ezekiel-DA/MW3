@@ -6,7 +6,8 @@
 
 // LED settings
 #define NUM_LEDS_WINDOWS 16
-#define NUM_LEDS_GROUNDLIGHTS 144+83 // NOTE: one side is actually only 142, and the other is identical + the back strip; it should be okay to drive both at the longer length
+// NB: only 212 working right now for some reason?
+#define NUM_LEDS_GROUNDLIGHTS 230 // NOTE: one side is actually only 142, and the other is identical + the back strip; it should be okay to drive both at the longer length
 #define NUM_LEDS_WATERFALL_SIDES 20
 #define NUM_LEDS_WATERFALL_CENTER 85
 #define NUM_LEDS_ADMIN_RING 7

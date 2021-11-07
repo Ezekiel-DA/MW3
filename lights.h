@@ -224,11 +224,11 @@ public:
       if (_selectedPatternID < NUM_LIGHTSTYLES)
       {
         byte scaledVal = scale8_video(_val, _maxBrightness);
-        setAllLEDs(CHSV(_hue, _saturation, _val), _leds1, _numLEDs1);
+        setAllLEDs(CHSV(_hue, _saturation, scaledVal), _leds1, _numLEDs1);
         if (_leds2)
-          setAllLEDs(CHSV(_hue, _saturation, _val), _leds2, _numLEDs2);
+          setAllLEDs(CHSV(_hue, _saturation, scaledVal), _leds2, _numLEDs2);
         if (_leds3)
-          setAllLEDs(CHSV(_hue, _saturation, _val), _leds3, _numLEDs3);
+          setAllLEDs(CHSV(_hue, _saturation, scaledVal), _leds3, _numLEDs3);
       }
       else
       {
@@ -404,14 +404,14 @@ public:
 
   void pulse()
   {
-    clickFairyLights(patternDistance(_selectedPatternID, _offPatternID));
-    for (byte i = 0; i < 3; ++i)
+    clickFairyLights(patternDistance(_selectedPatternID, _onPatternID));
+    for (byte i = 0; i < 2; ++i)
     {
-      clickFairyLights(patternDistance(_offPatternID, _onPatternID));
-      delay(50);
+      delay(500);
       clickFairyLights(patternDistance(_onPatternID, _offPatternID));
-      delay(50);
+      delay(300);
+      clickFairyLights(patternDistance(_offPatternID, _onPatternID));
     }
-    clickFairyLights(patternDistance(_offPatternID, _selectedPatternID));
+    clickFairyLights(patternDistance(_onPatternID, _selectedPatternID));
   };
 };
